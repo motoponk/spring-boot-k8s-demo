@@ -1,0 +1,27 @@
+sudo: required
+language: java
+jdk: oraclejdk8
+services:
+  - docker
+env:
+  global:
+    - secure: "oPzZjUaHEpPemeaqhtYJV7rhmSl+yJO6dUOrco7CUJ1X9Iza3TDPtgSQiB6kMvBk2WO+xVKQR9wIbeYRqKzfDAvGHGKfCkZ11pak3ojkh9d7+q7wjWcOEBBdU3WQgiS8cDGR+iEsgam7u8UB+1J7xoYU868Oh6PXhOhujFwo04F6co7Umf0PHm8d8c8fsMNsWtmlvKNJKkaN2Cjdy9Nk2k3daIrUxkqnhIJ1W0KO+LK+QaDKwAhxIJQderE6Uion/l66sUY7r2UaQs/Ck9J9/9sXFte6R/54+GlNmkpBIpuk+QvhEs/+i0R0kVFJYTn7UVZvbEVjsGCljmXixtEW+lzpzfcowhhNGyrTjI/4xXfVphDnrlWiQAXPrQ52jRQOA4gWfKNlRfa89guJ/OJKV/CgOBGa61ZUU1BbDcR8DWvW8cvR35GdwBqSIt4GRD3rdWVpo3ZUWzwZPR54flFqM2363qk37vRmxaTaY4KNvOQBmHksRgYWf850QonBf834PRUA/O/qKjX6yTZqabfD7sburjsG7TyL+/L3IK3iVtCKVjFVXk0IFggj5blk3C7oPm0M1rERxU55AMB3Fxonso1EnY4ExH/gjUhOd4+Jy5lli3Ct80UsBUBqL6VCiXJtKrtfgscm9o98VYhAO+nShCo5PJTamMAPfpNsaqQvFnY="
+    - secure: "YBj1GUWmOmFrS8Sy9mKwNejOaODJpjIa5HsOsaZs2gEJnV54Ni3LygjhQMzjXDWXthn5hztZNBd1k7pIo1SX/7h2C0bQGSZfx8QuE45L+oO8SaVqnhxDBfuEPISBh22zt+FY59cc63H82a4Yy+lY4KGBo49tS1atszUHkXHPTzg5RDqhl9hsaZPL+Feds8m0ZY9POKXMBfAGyY/U30kuSJzGIf8p1/iR13pnlyV2tcqpjWOMYwPVVLNpBLc72slkSWXnCCKqUZLo7J1WahJ4kunAdtxVY1sLU1w5Kl7ubTzKz6p1b8IIIjL/cEwrXft3TqbFSDsRjWgF5SCY5elDmZfYzw8i9+923EXoniQtDvnXvzZ3f8ZrJjkrBePJqxWO/nzPjTAbUBLfYrm+znrpkIqUZqu4GUo24YesgW6PfaC89ndYLrWVhkfhYe7ATS88qmimiImMVROYupEosHZUjcz4B1pKAZXGWUAVOb4RUXUjXXqoCLHdMxeB5E9ibwRWfSWWoEr/n9FkodRkkOXDyzqkGvzGR+bufroyF6ujLRQfqH1Ye+c0UOYX5+9iaVvcs24KgUUeeRGsceSucnGnyZ2mauWiZ5+rS7mufr5hjMh8c1Dndkl8AXRPsbV4nDNnrVmz6pWYpzohpX2G3UYp7vCqnWSErYL3tgPDi/qFdyI="
+    - PROJECT_NAME=spring-boot-k8s-demo
+    - COMMIT=${TRAVIS_COMMIT::7}
+
+script:
+  - ./mvnw clean install -B
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+
+after_success:
+  - docker login -u $DOCKER_USER -p $DOCKER_PASS
+  - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH; fi`
+  - export IMAGE_NAME=$DOCKER_USER/$PROJECT_NAME
+  - docker build -t $IMAGE_NAME:$COMMIT .
+  - docker tag $IMAGE_NAME:$COMMIT $IMAGE_NAME:$TAG
+  - docker push $IMAGE_NAME
+
